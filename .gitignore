@@ -1,0 +1,9 @@
+node_modules
+.next
+out
+*.tsbuildinfo
+next-env.d.ts
+.env*.local
+.DS_Store
+# Fuentes originales de vídeo (HEVC, 15-20 MB): fuera del repo, solo entra la versión web
+media-src/

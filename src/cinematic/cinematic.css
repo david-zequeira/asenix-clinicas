@@ -1,0 +1,249 @@
+/* ——— ACEE: capas del escenario cinematográfico ———
+   El estado inicial vive aquí para que la composición se vea bien antes de
+   que GSAP tome el mando (y para quien navega con reduced-motion). */
+
+.cine-stage {
+  position: relative;
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+  background: var(--color-night);
+  color: var(--color-bone);
+  isolation: isolate;
+}
+
+.cine-layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* Capa A — entorno: la misma película, ampliada, desenfocada y oscurecida */
+.cine-bg {
+  inset: -6%;
+  z-index: 0;
+  transform: scale(1.14);
+  filter: blur(28px) brightness(0.55);
+  opacity: 0.85;
+  will-change: transform, filter, opacity;
+}
+
+.cine-bg video,
+.cine-window video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cine-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(15, 12, 9, 0.1) 0%, rgba(15, 12, 9, 0.7) 100%);
+}
+
+/* Capa B — ventana: la misma película, nítida, recortada. El recorte se abre
+   con el scroll; el vídeo no se mueve, solo se ve más de él. */
+/* El recorte se expresa con variables y no con el string entero: el navegador
+   colapsa «inset(a b c b)» a su forma corta y GSAP perdería la correspondencia
+   de valores al interpolar. Tuneando cada variable, la forma nunca cambia. */
+.cine-window {
+  --win-t: 24%;
+  --win-r: 8%;
+  --win-b: 20%;
+  --win-l: 8%;
+  --win-rad: 28px;
+  z-index: 2;
+  clip-path: inset(var(--win-t) var(--win-r) var(--win-b) var(--win-l) round var(--win-rad));
+  will-change: clip-path;
+}
+
+.cine-window video {
+  transform: scale(1.08);
+  will-change: transform;
+}
+
+.cine-window::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(15, 12, 9, 0.35), transparent 45%);
+  pointer-events: none;
+}
+
+/* Capa C — tipografía y UI, cada una con su velocidad */
+.cine-title {
+  position: absolute;
+  z-index: 3;
+  left: 4%;
+  right: 4%;
+  top: 9%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.cine-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0.78;
+}
+
+.cine-heading {
+  margin-top: 1.1rem;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(2.7rem, 7.4vw, 7.6rem);
+  line-height: 0.94;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  text-shadow: 0 2px 40px rgba(15, 12, 9, 0.35);
+}
+
+.cine-heading em {
+  font-style: italic;
+  font-weight: 300;
+}
+
+.cine-subtitle {
+  position: absolute;
+  z-index: 3;
+  left: 8%;
+  bottom: 7%;
+  max-width: 34ch;
+  font-size: clamp(0.95rem, 1.1vw, 1.1rem);
+  line-height: 1.55;
+  color: rgba(239, 231, 218, 0.82);
+}
+
+.cine-meta {
+  position: absolute;
+  z-index: 3;
+  right: 8%;
+  bottom: 7.5%;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.cine-meta-line {
+  width: 3.5rem;
+  height: 1px;
+  background: currentColor;
+  transform-origin: left;
+  animation: cine-scroll-hint 2.6s ease-in-out infinite;
+}
+
+@keyframes cine-scroll-hint {
+  0%, 100% { transform: scaleX(0.35); opacity: 0.4; }
+  50% { transform: scaleX(1); opacity: 1; }
+}
+
+.cine-overlay {
+  position: absolute;
+  z-index: 3;
+  right: calc(8% + 1.5rem);
+  top: calc(24% + 1.5rem);
+  min-width: 13rem;
+  padding: 1rem 1.15rem 1.05rem;
+  border: 1px solid rgba(239, 231, 218, 0.18);
+  border-radius: 14px;
+  background: rgba(15, 12, 9, 0.28);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.cine-overlay-label {
+  font-size: 0.66rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.cine-overlay-value {
+  margin-top: 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.cine-overlay-note {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+/* Cierre: velo y contenido que entra cuando la ventana es la pantalla */
+.cine-scrim {
+  z-index: 3;
+  opacity: 0;
+  background: linear-gradient(to top, rgba(15, 12, 9, 0.88) 0%, rgba(15, 12, 9, 0.4) 42%, transparent 72%);
+  pointer-events: none;
+}
+
+.cine-reveal {
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 8% 8%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cine-reveal-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(2.2rem, 5.4vw, 5.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  max-width: 16ch;
+  text-wrap: balance;
+}
+
+.cine-reveal-text {
+  margin-top: 1.4rem;
+  max-width: 46ch;
+  font-size: clamp(1rem, 1.2vw, 1.15rem);
+  line-height: 1.6;
+  color: rgba(239, 231, 218, 0.82);
+}
+
+.cine-reveal-cta {
+  margin-top: 2rem;
+}
+
+/* Versión estática (prefers-reduced-motion): el cierre pasa a flujo normal */
+.cine-static-reveal {
+  padding: clamp(3rem, 8vw, 6rem) 8%;
+  background: var(--color-night);
+  color: var(--color-bone);
+}
+
+@media (max-width: 767px) {
+  .cine-window { --win-t: 30%; --win-r: 6%; --win-b: 28%; --win-l: 6%; --win-rad: 20px; }
+  .cine-title { top: 8%; }
+  .cine-subtitle {
+    left: 6%;
+    right: 6%;
+    bottom: 6%;
+    max-width: none;
+    font-size: 0.92rem;
+  }
+  .cine-meta,
+  .cine-overlay { display: none; }
+  .cine-reveal { padding: 0 6% 15%; }
+  .cine-reveal-text { font-size: 0.95rem; }
+  .cine-reveal-title { max-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cine-meta-line { animation: none; transform: none; }
+}
