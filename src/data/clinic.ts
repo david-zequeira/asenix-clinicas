@@ -25,7 +25,8 @@ export const clinic = {
   tagline: "Odontología con calma",
   description:
     "Clínica dental en Madrid. Diagnóstico honesto, tratamientos explicados con calma y un espacio pensado para que cada visita pese menos.",
-  siteUrl: "https://clinica-aire.example",
+  // URL pública: la fija el workflow (variable NEXT_PUBLIC_SITE_URL); sin ella, GitHub Pages.
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://david-zequeira.github.io/asenix-clinicas",
   city: "Madrid",
   contact: {
     phone: "+34 600 000 000",
