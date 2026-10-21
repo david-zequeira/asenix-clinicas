@@ -1,42 +1,51 @@
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import Manifesto from "@/components/sections/Manifesto";
-import Treatments from "@/components/sections/Treatments";
-import Method from "@/components/sections/Method";
-import Booking from "@/components/sections/Booking";
-import CinematicScene from "@/cinematic/CinematicScene";
+import { Loader, Nav, Extras } from "@/components/Chrome";
+import { Hero, Intro, Tratamientos, Catalogo, Rostro, Metodo, Espacio, Stats, Doctora, Voces, Experiencia, Footer } from "@/components/Sections";
+import Agent from "@/components/Agent";
+import Experience from "@/experience/Experience";
 import { clinic } from "@/data/clinic";
 
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "Dentist",
+  "@type": "MedicalClinic",
   name: clinic.name,
   url: clinic.siteUrl,
   description: clinic.description,
-  telephone: clinic.contact.phone,
+  telephone: "+34 " + clinic.contact.phone,
   email: clinic.contact.email,
-  address: { "@type": "PostalAddress", streetAddress: clinic.contact.address, addressLocality: clinic.city, addressCountry: "ES" },
+  medicalSpecialty: "Dermatology",
+  address: { "@type": "PostalAddress", streetAddress: "Calle Don Ramón de la Cruz 36, Bajo B", postalCode: "28001", addressLocality: clinic.city, addressCountry: "ES" },
+  openingHoursSpecification: { "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "10:00", closes: "20:00" },
+  employee: { "@type": "Physician", name: "Dra. Andrea Marroquín", jobTitle: "Directora médica" },
 };
 
 /**
- * Una película en tres actos con respiros editoriales entre ellos:
- * recepción → manifiesto + tratamientos → consulta → método → equipo → reserva.
+ * Una película en nueve actos: la clínica (portada) → Aruma → tratamientos →
+ * el rostro → el método → el espacio → cifras → la doctora → reseñas →
+ * la experiencia, que termina en la tarjeta de reserva.
  */
 export default function Home() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <Navbar />
+      <Loader />
+      <Nav />
       <main>
-        <CinematicScene scene={clinic.scenes.hero} priority />
-        <Manifesto />
-        <Treatments />
-        <CinematicScene scene={clinic.scenes.consulta} />
-        <Method />
-        <CinematicScene scene={clinic.scenes.equipo} />
-        <Booking />
+        <Hero />
+        <Intro />
+        <Tratamientos />
+        <Rostro />
+        <Metodo />
+        <Espacio />
+        <Stats />
+        <Doctora />
+        <Voces />
+        <Experiencia />
       </main>
       <Footer />
+      <Catalogo />
+      <Agent />
+      <Extras />
+      <Experience />
     </>
   );
 }

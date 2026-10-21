@@ -6,6 +6,8 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const nextConfig: NextConfig = {
   output: "export",
+  // el motor de la página es imperativo (GSAP/Lenis): un solo montaje también en desarrollo
+  reactStrictMode: false,
   basePath,
   images: { unoptimized: true },
 };

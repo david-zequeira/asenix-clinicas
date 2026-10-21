@@ -1,22 +1,21 @@
-import type { Metadata } from "next";
-import { Fraunces, Instrument_Sans } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Cormorant_Garamond, Manrope } from "next/font/google";
 import "./globals.css";
-import SmoothScroll from "@/components/providers/SmoothScroll";
-import RevealProvider from "@/components/providers/RevealProvider";
-import { clinic } from "@/data/clinic";
+import { clinic, img } from "@/data/clinic";
 
-const fraunces = Fraunces({
+// Cormorant: la serifa de la marca Aruma, fina y con cursiva propia
+const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["300", "400"],
+  weight: ["300", "400", "500"],
   style: ["normal", "italic"],
-  variable: "--font-fraunces",
+  variable: "--font-cormorant",
   display: "swap",
 });
 
-const instrument = Instrument_Sans({
+const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-instrument",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-manrope",
   display: "swap",
 });
 
@@ -25,6 +24,7 @@ export const metadata: Metadata = {
   title: `${clinic.name} — ${clinic.tagline}`,
   description: clinic.description,
   alternates: { canonical: "./" },
+  icons: { icon: img("isotipo", "png"), apple: img("isotipo", "png") },
   openGraph: {
     title: `${clinic.name} — ${clinic.tagline}`,
     description: clinic.description,
@@ -32,18 +32,21 @@ export const metadata: Metadata = {
     locale: "es_ES",
     url: "./",
     siteName: clinic.name,
-    images: [{ url: clinic.scenes.hero.media.poster, width: 1920, height: 1080, alt: clinic.name }],
+    images: [{ url: img("og", "jpg"), width: 1200, height: 630, alt: clinic.name }],
   },
   robots: { index: true, follow: true },
 };
 
+export const viewport: Viewport = { themeColor: "#1d1814", width: "device-width", initialScale: 1, viewportFit: "cover" };
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es">
-      <body suppressHydrationWarning className={`${fraunces.variable} ${instrument.variable}`}>
-        <SmoothScroll>
-          <RevealProvider>{children}</RevealProvider>
-        </SmoothScroll>
+    <html lang="es" className={`${cormorant.variable} ${manrope.variable}`}>
+      <head>
+        <link rel="preload" as="image" href={img("hero-poster")} />
+      </head>
+      <body suppressHydrationWarning className="is-loading">
+        {children}
       </body>
     </html>
   );
