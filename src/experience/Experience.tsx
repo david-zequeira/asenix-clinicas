@@ -2,22 +2,26 @@
 
 import { useEffect } from "react";
 import { clinic } from "@/data/clinic";
-import { initChat } from "./chat";
+import { initConsulta } from "./consulta";
+import { initAtlas } from "./atlas";
 import { initVoz } from "./voz";
 import { startEngine } from "./engine";
 import { sessionId } from "./session";
 
 /**
- * Enciende la página: la asistente (chat y voz), el motor de movimiento y la
- * medición. El marcado lo pinta el servidor; aquí solo se le da vida.
+ * Enciende la página: el movimiento, la consulta (la asistente por escrito),
+ * el atlas del rostro, la voz y la medición. El marcado lo pinta el servidor.
  */
 export default function Experience() {
   useEffect(() => {
-    const chat = initChat(clinic.agent);
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const engine = startEngine(reduce);
+    const consulta = initConsulta();
+    const atlas = initAtlas({ lenis: engine.lenis, consulta, reduce });
+    consulta.setOpenZone(atlas.open);
     const stopVoz = initVoz(clinic.agent);
-    const stopEngine = startEngine({ chat });
     const stopTrack = track();
-    return () => { stopTrack(); stopEngine(); stopVoz(); chat.destroy(); };
+    return () => { stopTrack(); stopVoz(); atlas.destroy(); consulta.destroy(); engine.destroy(); };
   }, []);
   return null;
 }
@@ -36,10 +40,10 @@ function track() {
   send();
   const once = new Set<string>();
   const onClick = (e: MouseEvent) => {
-    const t = (e.target as Element | null)?.closest('[data-book],[data-voz-open],[data-chat-open],[data-cat-open],[data-cd-ask],a[href^="tel:"],a[href^="mailto:"],a[href*="wa.me"],a[href*="google.com/maps"]');
+    const t = (e.target as Element | null)?.closest('[data-f-book],[data-voz-open],[data-zone-open],[data-answer],[data-ask-treatment],a[href^="tel:"],a[href^="mailto:"],a[href*="wa.me"],a[href*="google.com/maps"]');
     if (!t) return;
-    const ev = t.matches("[data-book]") ? "cta_reservar" : t.matches("[data-voz-open]") ? "llamada_abierta" : t.matches("[data-chat-open],[data-cd-ask]") ? "chat_abierto"
-      : t.matches("[data-cat-open]") ? "tratamientos_abiertos" : t.matches('a[href^="tel:"]') ? "clic_telefono" : t.matches('a[href^="mailto:"]') ? "clic_email"
+    const ev = t.matches("[data-f-book]") ? "cta_reservar" : t.matches("[data-voz-open]") ? "llamada_abierta" : t.matches("[data-zone-open]") ? "atlas_zona"
+      : t.matches("[data-answer],[data-ask-treatment]") ? "chat_abierto" : t.matches('a[href^="tel:"]') ? "clic_telefono" : t.matches('a[href^="mailto:"]') ? "clic_email"
       : t.matches('a[href*="wa.me"]') ? "clic_whatsapp" : "clic_como_llegar";
     if (!once.has(ev)) { once.add(ev); send(ev); }
   };

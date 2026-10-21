@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Manrope } from "next/font/google";
+import { Cormorant_Garamond, DM_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import { clinic, img } from "@/data/clinic";
 
@@ -19,6 +19,9 @@ const manrope = Manrope({
   display: "swap",
 });
 
+// mono: las anotaciones del atlas (la parte «ciencia» de la marca)
+const mono = DM_Mono({ subsets: ["latin"], weight: ["300", "400"], variable: "--font-mono", display: "swap" });
+
 export const metadata: Metadata = {
   metadataBase: new URL(clinic.siteUrl),
   title: `${clinic.name} — ${clinic.tagline}`,
@@ -37,15 +40,15 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export const viewport: Viewport = { themeColor: "#1d1814", width: "device-width", initialScale: 1, viewportFit: "cover" };
+export const viewport: Viewport = { themeColor: "#f4efe8", width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${cormorant.variable} ${manrope.variable}`}>
+    <html lang="es" className={`${cormorant.variable} ${manrope.variable} ${mono.variable}`}>
       <head>
-        <link rel="preload" as="image" href={img("hero-poster")} />
+        <link rel="preload" as="image" href={img("still-rostro")} />
       </head>
-      <body suppressHydrationWarning className="is-loading">
+      <body suppressHydrationWarning>
         {children}
       </body>
     </html>

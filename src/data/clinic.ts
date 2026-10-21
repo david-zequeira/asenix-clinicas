@@ -1,4 +1,4 @@
-import type { GalleryItem, HeroScene, Review, Zone } from "./types";
+import type { Answer, Chapter, Review, Zone } from "./types";
 import { areas, treatments } from "./treatments";
 
 /**
@@ -16,15 +16,16 @@ export const clinic = {
   name: "Aruma Clinic",
   tagline: "Ciencia & Serenidad",
   description:
-    "Aruma Clinic, medicina estética avanzada en Madrid. Tratamientos faciales, corporales y de calidad de piel con resultados naturales, de la mano de la Dra. Andrea Marroquín.",
+    "Aruma Clinic, medicina estética avanzada en Madrid. Recorre el atlas del rostro, cuéntanos qué buscas y reserva tu valoración con la Dra. Andrea Marroquín.",
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://david-zequeira.github.io/asenix-clinicas",
   city: "Madrid",
 
-  /** Asistente de reservas (ng-agent): chat y llamada web con el mismo tenant. */
+  /** Asistente de citas (ng-agent): la consulta escrita y la llamada usan el mismo tenant. */
   agent: { url: "https://ng-agent-eu.onrender.com", tenant: "aruma-clinic", name: "Aruma" },
 
   contact: {
-    address: "Calle Don Ramón de la Cruz 36, Bajo B\n28001 Madrid",
+    street: "Calle Don Ramón de la Cruz 36, Bajo B",
+    city: "28001 Madrid",
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Calle%20Don%20Ram%C3%B3n%20de%20la%20Cruz%2036%2C%2028001%20Madrid",
     phone: "652 538 353",
     whatsapp: "34652538353",
@@ -33,108 +34,105 @@ export const clinic = {
     facebook: "arumaclinic",
   },
   hours: [
-    ["Días", "Lunes a viernes"],
-    ["Horario", "10:00 – 20:00"],
+    ["Lunes a viernes", "10:00 – 20:00"],
+    ["Sábado y domingo", "Cerrado"],
     ["Cita", "Previa y personalizada"],
-    ["Primera visita", "Valoración médica"],
   ] as [string, string][],
   legal: { company: "ROIA MEDICAL GROUP S.L.", cif: "B02715241", site: "https://arumaclinic.com" },
 
-  /** Portada: un texto por plano de la película (recepción, el rostro, la consulta). */
-  hero: [
-    { title: "Ciencia", italic: "& serenidad", lead: "La belleza surge cuando el equilibrio se consolida." },
-    { title: "Tu rostro,", italic: "en su mejor versión", lead: "Resultados naturales: que luzcas descansada, no diferente." },
-    { title: "Bienvenida", italic: "a Aruma", lead: "Medicina estética avanzada en el corazón de Madrid.", ctas: true },
-  ] satisfies HeroScene[],
-
-  intro: {
-    title: "Aquí, la belleza no se persigue:",
-    italic: "surge cuando el bienestar se consolida.",
-    text: "Un espacio donde la ciencia se encuentra con la serenidad. Precisión médica, sensibilidad artística y tiempo para escucharte.",
-  },
-
-  trat: {
-    title: "Resultados",
-    italic: "que transforman",
-    text: "Veintiséis tratamientos en seis áreas, siempre tras una valoración médica personalizada. Pulsa un área para ver cada tratamiento, cuánto dura y qué esperar.",
-  },
-
-  /** 03 · La lectura del rostro: el primer plano de la película y sus zonas. */
-  rostro: {
+  /* =================== 01 · EL ATLAS DEL ROSTRO =================== */
+  atlas: {
     still: "still-rostro",
-    macro: "still-labios",
-    /** centro del círculo, radio y punto al que se acerca la cámara (labios), en px del fotograma */
-    geo: { w: 1920, h: 1080, cx: 1010, cy: 560, r: 470, zoom: [1060, 750] as [number, number] },
+    /** fotograma del que se sacan los puntos (más pequeño: se lee una vez) */
+    sample: "still-rostro-960",
+    frame: [1920, 1080] as [number, number],
     zones: [
-      { at: [1010, 150], side: "r", kicker: "Neuromoduladores", label: "Frente y entrecejo", short: "Frente" },
-      { at: [700, 330], side: "l", kicker: "Toxina botulínica", label: "Patas de gallo", mobile: false },
-      { at: [790, 500], side: "l", kicker: "Ácido hialurónico", label: "Pómulos" },
-      { at: [1180, 500], side: "r", kicker: "Sin cirugía", label: "Rinomodelación", short: "Nariz" },
-      { at: [1070, 745], side: "r", kicker: "Volumen e hidratación", label: "Labios" },
-      { at: [640, 860], side: "l", kicker: "Contorno", label: "Marcación mandibular", short: "Mandíbula" },
-      { at: [1080, 935], side: "r", kicker: "Proyección", label: "Mentón", mobile: false },
+      { id: "frente", n: "01", name: "Frente", italic: "y entrecejo", at: [1010, 175], shape: [[1010, 160, 300, 105]],
+        lead: "Las líneas de expresión se suavizan relajando el músculo, sin perder la expresión. El objetivo es que luzcas descansada, no diferente.",
+        clip: "zona-consulta", fig: "Valoración del tercio superior", treatments: ["arrugas", "inductores-de-colageno"] },
+      { id: "mirada", n: "02", name: "Mirada", italic: "y patas de gallo", at: [880, 345], shape: [[880, 340, 190, 70], [1240, 330, 140, 60]],
+        lead: "Arrugas perioculares muy finas que se tratan con toxina botulínica o con microinyecciones superficiales de ácido hialurónico.",
+        clip: "zona-limpieza", fig: "Limpieza y preparación de la piel", treatments: ["arrugas", "blanching"] },
+      { id: "pomulos", n: "03", name: "Pómulos", italic: "y volumen", at: [790, 520], shape: [[790, 520, 150, 110]],
+        lead: "Reponer el volumen que se pierde con los años devuelve un aspecto descansado. Antes de tratar, se estudia lo que hay bajo la piel.",
+        clip: "zona-ecografia", fig: "Ecografía facial · bajo la piel", treatments: ["aumento-de-pomulos", "inductores-de-colageno", "armonizacion-facial"] },
+      { id: "nariz", n: "04", name: "Nariz", italic: "sin cirugía", at: [1135, 500], shape: [[1135, 470, 75, 160]],
+        lead: "Rectificar el caballete, elevar la punta o corregir asimetrías con ácido hialurónico, viendo el resultado en tiempo real.",
+        clip: "zona-consulta", fig: "El perfil, en consulta", treatments: ["rinomodelacion"] },
+      { id: "labios", n: "05", name: "Labios", italic: "volumen justo", at: [1065, 745], shape: [[1065, 745, 165, 70]],
+        lead: "La especialidad de la Dra. Marroquín: definir, dar volumen o simplemente hidratar, siempre en proporción con el resto del rostro.",
+        clip: "zona-labios", fig: "Aumento de labios con ácido hialurónico", treatments: ["relleno-de-labios", "hidratacion-de-labios", "codigo-de-barras"] },
+      { id: "contorno", n: "06", name: "Contorno", italic: "mentón y mandíbula", at: [1000, 935], shape: [[1060, 940, 170, 80], [640, 820, 120, 140]],
+        lead: "El perfil se construye entre mentón y mandíbula; a veces un pequeño cambio en uno equilibra todo el conjunto.",
+        clip: "zona-consulta", fig: "Lectura del perfil", treatments: ["aumento-de-menton", "marcacion-mandibular", "masculinizacion-facial", "bruxismo"] },
+      { id: "piel", n: "07", name: "La piel", italic: "entera", at: [1010, 560], shape: [],
+        lead: "La base sobre la que todo lo demás se ve mejor: limpiar, hidratar, regenerar y dar luz, casi siempre sin tiempo de baja.",
+        clip: "zona-hydrafacial", fig: "Hydrafacial · limpieza e hidratación", treatments: ["hydrafacial", "skinbooster", "polinucleotidos", "plasma-rico-en-plaqueta", "vitaminas-faciales", "dermapen", "peeling-quimico", "laser-fraccionado-no-ablativo", "luz-pulsada-intensa", "radiofrecuencia"] },
     ] satisfies Zone[],
   },
 
-  /** 04 · El método: la película del cuidado y cuatro pasos. */
-  metodo: [
-    { h: "Escucha", p: "Una primera valoración médica sin prisa: qué te preocupa, qué esperas y qué es posible.", img: "still-consulta-960" },
-    { h: "Diagnóstico", p: "Exploración del rostro y de la piel para entender el conjunto, no solo una zona.", img: "still-ecografia-960" },
-    { h: "Tratamiento", p: "Precisión médica y sensibilidad artística, con productos de alta gama y técnica personalizada.", img: "still-hydrafacial-960" },
-    { h: "Acompañamiento", p: "Seguimiento cercano después de cada sesión. Tu bienestar es el inicio, no el final.", img: "still-espera-960" },
-  ],
+  /* =================== 02 · LA CONSULTA =================== */
+  consulta: {
+    title: "¿Qué te gustaría cambiar…",
+    italic: "o qué prefieres conservar?",
+    answers: [
+      { id: "luz", label: "Más luz en la piel", zones: ["piel"], treatments: ["hydrafacial", "skinbooster", "vitaminas-faciales", "polinucleotidos"],
+        reply: "Para devolver luz a la piel empezamos por su calidad: limpiar en profundidad, hidratar y regenerar. Son tratamientos sin tiempo de baja." },
+      { id: "lineas", label: "Líneas de expresión", zones: ["frente", "mirada"], treatments: ["arrugas", "blanching", "codigo-de-barras"],
+        reply: "Las líneas de la frente, el entrecejo y las patas de gallo se suavizan relajando el músculo, sin perder expresión. Descansada, no diferente." },
+      { id: "labios", label: "Labios", zones: ["labios"], treatments: ["relleno-de-labios", "hidratacion-de-labios"],
+        reply: "Es la especialidad de la doctora: definir, dar volumen justo o simplemente hidratar, siempre en proporción con el resto del rostro." },
+      { id: "contorno", label: "Contorno y perfil", zones: ["pomulos", "contorno", "nariz"], treatments: ["aumento-de-pomulos", "aumento-de-menton", "marcacion-mandibular", "rinomodelacion"],
+        reply: "El perfil se construye entre pómulos, nariz, mentón y mandíbula. A menudo un cambio pequeño en uno equilibra todo el conjunto." },
+      { id: "prevenir", label: "Solo prevenir", zones: ["piel"], treatments: ["skinbooster", "inductores-de-colageno", "dermapen", "peeling-quimico"],
+        reply: "Prevenir es cuidar la calidad de la piel y estimular su propio colágeno antes de tener que corregir nada." },
+      { id: "nose", label: "Aún no lo sé", zones: [], treatments: ["armonizacion-facial"],
+        reply: "Es lo más habitual, y la mejor manera de empezar: en la valoración la doctora mira el conjunto y te propone solo lo que tiene sentido para ti." },
+    ] satisfies Answer[],
+  },
 
-  gallery: [
-    { img: "espacio-3", alt: "Recepción de Aruma Clinic con el arco y el logotipo", caption: "La recepción", ar: 1.45, h: 0.5, y: -2.4, g: 3.7 },
-    { img: "foto-0424", alt: "La doctora muestra el resultado a una paciente en un espejo", caption: "El resultado", ar: 0.67, h: 0.7, y: 2.9, g: 2.2 },
-    { img: "espacio-1", alt: "Consulta con sillón de tratamiento y escritorio", caption: "La consulta", ar: 1.45, h: 0.6, y: -1, g: 6.4 },
-    { img: "still-led", alt: "Tratamiento de luz LED en cabina", caption: "La luz", ar: 0.8, h: 0.8, y: 1.6, g: 2.4 },
-    { img: "espacio-4", alt: "Sala de espera con butacas y hornacina iluminada", caption: "La espera", ar: 1.45, h: 0.53, y: -3.6, g: 5.3 },
-    { img: "foto-0489", alt: "La Dra. Marroquín aplica un tratamiento facial", caption: "El cuidado", ar: 0.67, h: 0.69, y: 2.2, g: 2.7 },
-    { img: "espacio-2", alt: "Sillón de tratamiento con el isotipo de Aruma", caption: "La cabina", ar: 1.45, h: 0.49, y: -2, g: 4.9 },
-    { img: "still-espera", alt: "Zona de descanso luminosa con plantas", caption: "La calma", ar: 1.1, h: 0.57, y: 3.6, g: 1.2 },
-    { img: "espacio-6", alt: "Rincón de lectura con butacas blancas", caption: "El detalle", ar: 1.45, h: 0.6, y: 0, g: 4.9 },
-  ] satisfies GalleryItem[],
-
-  stats: [
-    { value: 26, label: "Tratamientos médico-estéticos" },
-    { value: 10, label: "Años ejerciendo la medicina", suffix: "+" },
-    { value: 57, label: "Reseñas en Google" },
-    { value: 6, label: "Áreas de tratamiento" },
-  ],
+  /* =================== 03 · LA CLÍNICA, EN 26 SEGUNDOS =================== */
+  film: {
+    chapters: [
+      { at: 0, label: "Recepción" },
+      { at: 1.9, label: "Bienvenida" },
+      { at: 3.6, label: "El rostro" },
+      { at: 5.4, label: "Valoración" },
+      { at: 7.2, label: "Limpieza" },
+      { at: 10.8, label: "Hydrafacial" },
+      { at: 14.4, label: "Luz LED" },
+      { at: 18.4, label: "Ecografía" },
+      { at: 21.9, label: "Labios" },
+      { at: 24.9, label: "Calma" },
+    ] satisfies Chapter[],
+  },
 
   doctora: {
     name: "Dra. Andrea",
     italic: "Marroquín",
     role: "Directora médica",
     quote: "La medicina estética contribuye a mejorar ese estado de bienestar y de plenitud.",
-    text: "Licenciada en Medicina en la Universidad San Carlos de Guatemala y Máster en Medicina Estética y Antiaging por la Universidad Complutense de Madrid. Lleva más de diez años ejerciendo la medicina y está especializada en armonización facial personalizada y en el aumento, la definición y la hidratación de los labios.",
-    tags: ["Máster en Medicina Estética · UCM", "Máster en Nutrición Clínica", "Máster en Láser y dispositivos · AMIR", "Diplomado en Dermatología"],
+    text: "Nació en Guatemala, donde estudió Medicina y Cirugía, y se formó como médico estético en la Universidad Complutense de Madrid. Lleva más de diez años ejerciendo la medicina y está especializada en armonización facial personalizada y en el aumento, la definición y la hidratación de los labios.",
+    cv: [
+      ["2005–2011", "Licenciada en Medicina · Universidad San Carlos de Guatemala"],
+      ["2016–2017", "Máster en Medicina Estética y Antiaging · Universidad Complutense de Madrid"],
+      ["2020–2021", "Experto en Técnicas de Imagen en Medicina y Cirugía Estética · Universidad de Alcalá"],
+      ["2020–2021", "Máster en Nutrición Clínica · Universidad Cardenal Herrera"],
+      ["2021–2023", "Diplomado en Dermatología · AMIR – Océano Medicina"],
+      ["2023–2024", "Máster en Láser y Dispositivos Basados en Energía · AMIR"],
+    ] as [string, string][],
     photo: "foto-0578",
     inset: "foto-0717",
   },
 
   reviews: [
-    { quote: "Trato excelente desde el minuto uno. Tanto la doctora como Aly son muy cercanas y atentas. Me traté las ojeras y el resultado fue muy natural y bonito.", name: "Carmen Herranz Benito", role: "Reseña de Google", photo: "foto-0424" },
-    { quote: "Una atención muy profesional y cercana por parte de la Dra. Andrea Marroquín. Te sientes segura y cómoda en sus manos.", name: "Ana María Ferrer", role: "Reseña de Google", photo: "doctora-5" },
-    { quote: "Un servicio excelente de principio a fin. El resultado del retoque ha superado mis expectativas: muy natural y justo como quería.", name: "David Antonov Dimitrov", role: "Reseña de Google", photo: "still-consulta" },
-    { quote: "Una clínica cinco estrellas. Desde el primer momento me sentí en las mejores manos. Recomiendo 100 % este lugar.", name: "Marcia Bosquez", role: "Reseña de Google", photo: "espacio-3" },
-    { quote: "El bótox lo pone de maravilla: el resultado es muy natural. Nunca intenta hacer tratamientos innecesarios y siempre busca el resultado más favorecedor.", name: "Aida Gómez", role: "Reseña de Google", photo: "doctora-1" },
+    { quote: "Me traté las ojeras y el resultado fue muy natural y bonito.", name: "Carmen Herranz Benito" },
+    { quote: "Te sientes segura y cómoda en sus manos.", name: "Ana María Ferrer" },
+    { quote: "El resultado del retoque ha superado mis expectativas: muy natural y justo como quería.", name: "David Antonov Dimitrov" },
+    { quote: "Desde el primer momento me sentí en las mejores manos.", name: "Marcia Bosquez" },
+    { quote: "Nunca intenta hacer tratamientos innecesarios y siempre busca el resultado más favorecedor.", name: "Aida Gómez" },
+    { quote: "Genial trato y profesionalidad. Repetiré el año siguiente de nuevo.", name: "Guadalupe Ríos López" },
   ] satisfies Review[],
-
-  experiencia: {
-    text: "Del primer saludo en recepción al seguimiento después de cada sesión: un recorrido pensado para tu bienestar, tu privacidad y tu confianza.",
-    list: ["Valoración médica personalizada", "Plan de tratamiento a tu medida", "Seguimiento cercano"],
-  },
-
-  reserva: {
-    title: "Tu consulta",
-    italic: "te espera",
-    text: "Reserva tu valoración con la Dra. Marroquín. Nuestra asistente te atiende al momento, por escrito o por voz, a cualquier hora.",
-  },
-
-  /** Sugerencias del chat. */
-  chips: ["Quiero una primera valoración", "¿Cuánto dura el aumento de labios?", "¿Qué me recomiendas para las ojeras?"],
 
   areas,
   treatments,

@@ -16,6 +16,9 @@ export const Bubble = () => (
 export const Close = () => (
   <svg viewBox="0 0 24 24" {...stroke} strokeWidth={1.6} aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
 );
+export const Mic = () => (
+  <svg viewBox="0 0 24 24" {...stroke} strokeWidth={1.6} aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+);
 export const Quote = () => (
   <svg className="mark" viewBox="0 0 62 52" fill="currentColor" aria-hidden="true"><path d="M0 52V27C0 11 7 3 22 0l2 8c-8 3-11 8-11 15h11v29zM38 52V27c0-16 7-24 22-27l2 8c-8 3-11 8-11 15h11v29z" /></svg>
 );

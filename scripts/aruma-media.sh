@@ -6,15 +6,11 @@
 # La película de la clínica (clinica-inicio.mp4, 26 s, 1080p) tiene diez planos;
 # de ella salen la portada, los dos vídeos de sección y los fotogramas fijos:
 #
-#   0,0–3,6   recepción → la doctora recibe a la paciente   ┐
-#   3,6–5,4   el rostro (primer plano)                      ├ portada (fotogramas)
-#   5,4–6,7   consulta                                       ┘
-#   7,3–18,0  limpieza · hydrafacial · LED                  → cuidado-*.mp4
-#   18,6–26,3 ecografía · labios · sala de espera           → experiencia-*.mp4
+#   recepción · bienvenida · rostro · consulta · limpieza · hydrafacial ·
+#   LED · ecografía · labios · sala de espera
 #
-#   seq/hero-1920|1280/h-NNN.webp  portada: 24 fotogramas por segundo, se recorren con el scroll
-#   <clip>-1080.mp4 / -720.mp4     H.264 sin audio (escritorio / móvil)
-#   <clip>-poster.webp             primer fotograma
+#   clinica-1080|720.mp4           la película entera, sin audio (sección «La clínica»)
+#   zona-*.mp4                     clips cortos de 960 px para la lupa del atlas
 #   still-*.webp                   fotogramas fijos para secciones y tarjetas
 #   foto-*.webp                    fotografías de la clínica
 set -euo pipefail
@@ -22,32 +18,23 @@ SRC="${1:?directorio con los originales}"
 OUT="$(cd "$(dirname "$0")/.." && pwd)/public/media/aruma"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-mkdir -p "$OUT/seq/hero-1920" "$OUT/seq/hero-1280"
+mkdir -p "$OUT"
 FILM="$SRC/clinica-inicio.mp4"
 H264="-c:v libx264 -preset slow -pix_fmt yuv420p -profile:v high -level 4.1 -movflags +faststart -an"
 
 webp() { cwebp -quiet -q "$3" -resize "$2" 0 "$1" -o "$4"; }   # origen ancho calidad destino
 
-echo "== portada (fotogramas)"
-ffmpeg -v error -y -ss 0 -t 6.7 -i "$FILM" -vf "fps=24" -q:v 2 "$TMP/f-%03d.jpg"
-i=0
-for f in "$TMP"/f-*.jpg; do
-  n=$(printf '%03d' "$i")
-  webp "$f" 1920 72 "$OUT/seq/hero-1920/h-$n.webp"
-  webp "$f" 1280 70 "$OUT/seq/hero-1280/h-$n.webp"
-  i=$((i + 1))
-done
-echo "   $i fotogramas"
-webp "$TMP/f-001.jpg" 1920 78 "$OUT/hero-poster.webp"
+echo "== película completa (capítulos)"
+ffmpeg -v error -y -i "$FILM" -vf "scale=1920:-2" $H264 -crf 22 "$OUT/clinica-1080.mp4"
+ffmpeg -v error -y -i "$FILM" -vf "scale=1280:-2" $H264 -crf 25 "$OUT/clinica-720.mp4"
+ffmpeg -v error -y -ss 0.6 -i "$FILM" -frames:v 1 -q:v 2 "$TMP/clinica-poster.jpg"
+webp "$TMP/clinica-poster.jpg" 1600 78 "$OUT/clinica-poster.webp"
 
-echo "== vídeos de sección"
-# nombre|inicio|duración
-for entry in "cuidado|7.3|10.7" "experiencia|18.6|7.7"; do
-  IFS='|' read -r name ss t <<<"$entry"
-  ffmpeg -v error -y -ss "$ss" -t "$t" -i "$FILM" -vf "scale=1920:-2" $H264 -crf 21 "$OUT/$name-1080.mp4"
-  ffmpeg -v error -y -ss "$ss" -t "$t" -i "$FILM" -vf "scale=1280:-2" $H264 -crf 24 "$OUT/$name-720.mp4"
-  ffmpeg -v error -y -ss "$ss" -i "$FILM" -frames:v 1 -q:v 2 "$TMP/$name-poster.jpg"
-  webp "$TMP/$name-poster.jpg" 1920 78 "$OUT/$name-poster.webp"
+echo "== clips del atlas (uno por zona, en bucle dentro de la lupa)"
+# nombre|inicio|duración|ralentí
+for entry in "limpieza|7.4|3.2|1" "ecografia|18.7|2.8|1" "labios|22.0|2.5|1" "consulta|5.45|1.25|1.6" "hydrafacial|10.9|3.3|1" "led|14.5|3.4|1"; do
+  IFS='|' read -r name ss t slow <<<"$entry"
+  ffmpeg -v error -y -ss "$ss" -t "$t" -i "$FILM" -vf "setpts=$slow*PTS,scale=960:-2" $H264 -crf 23 "$OUT/zona-$name.mp4"
 done
 
 echo "== fotogramas fijos"
@@ -74,4 +61,4 @@ cwebp -quiet -q 90 -alpha_q 100 -crop 272 188 1056 1224 -resize 560 0 "$SRC/logo
 ffmpeg -v error -y -i "$SRC/ARUMA_Isotipo_color_blanco_fondo_transparente.png" -vf "crop=1128:1116:236:240,scale=480:-2" "$OUT/isotipo.png"
 ffmpeg -v error -y -i "$TMP/s-recepcion.jpg" -vf "scale=1200:-2,crop=1200:630" -q:v 3 "$OUT/og.jpg"
 
-du -sh "$OUT" "$OUT/seq"/*
+du -sh "$OUT"

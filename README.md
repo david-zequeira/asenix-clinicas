@@ -1,49 +1,46 @@
 # asenix-clinicas
 
 Vertical **clínicas privadas** de Asenix. Primer cliente: **Aruma Clinic** (medicina estética,
-Madrid). Una web «luxury experience» con el mismo motor y el mismo lenguaje visual que la de
-Ozio, más la asistente de citas de `ng-agent` (chat y llamada) dentro de la propia página.
+Madrid). Guion propio, distinto del de Ozio: **«Atlas del rostro» + «La consulta»**, inspirado en
+webs premiadas que usan el cuerpo como navegación (Neko Health, Vibrant Wellness) y la IA dentro
+del contenido (Lóvi).
 
 Cambiar de clínica es cambiar `src/data/clinic.ts`, `src/data/treatments.ts` y los medios.
 
 ```
 src/
-├── data/clinic.ts        LA ficha: textos, contacto, horario, reseñas, doctora, rostro, galería, agente
+├── data/clinic.ts        LA ficha: zonas del atlas, respuestas de la consulta, capítulos, doctora, reseñas, agente
 ├── data/treatments.ts    áreas y tratamientos (generado del contenido de arumaclinic.com)
 ├── components/           marcado de cada sección (servidor): Chrome, Sections, Agent
 ├── experience/           lo que da vida a la página (cliente)
-│   ├── engine.ts         motor de movimiento: GSAP + ScrollTrigger + Lenis en un solo rAF
-│   ├── chat.ts / voz.ts  la asistente: POST /api/chat y llamada web con Retell vía ng-agent
+│   ├── atlas.ts          el rostro en puntos (WebGL), la lupa, las zonas y el zoom con la película
+│   ├── consulta.ts       la asistente dentro de la página y la ficha que se rellena sola
+│   ├── engine.ts         Lenis + ScrollTrigger: titulares, película por capítulos, índice, voces
+│   ├── voz.ts            llamada web con Retell vía ng-agent
 │   └── Experience.tsx    lo enciende todo y mide visitas y clics (/api/track)
-├── cinematic/            el motor ACEE de la primera versión (escena con ventana), disponible
-└── app/                  layout (Cormorant Garamond + Manrope, metadata) y página
-public/media/aruma/       medios web (scripts/aruma-media.sh)
+├── cinematic/            el motor ACEE de la primera versión, disponible
+└── app/                  layout (Cormorant Garamond + Manrope + DM Mono) y página
 ```
 
-## La película
+## La página
 
-| | Sección | Qué pasa al hacer scroll |
+| | Sección | Qué pasa |
 |---|---|---|
-| — | Cargador | isotipo y logotipo; la cuenta sigue la carga real de la portada |
-| — | Portada | 161 fotogramas de la película de la clínica (recepción → saludo → rostro → consulta) que avanzan con el scroll; un texto por plano |
-| 01 | Aruma | las palabras del manifiesto se encienden |
-| 02 | Tratamientos | seis áreas; la foto sigue al cursor; cada área abre el catálogo (26 fichas) con un círculo |
-| 03 | Armonización facial | el rostro entra en un espejo, salen las zonas, se abre el plano y la cámara llega a los labios |
-| 04 | El método | la película del cuidado a pantalla completa y un acordeón de cuatro pasos |
-| 05 | El espacio | galería infinita con paralaje, arrastre y visor |
-| — | Cifras | odómetro sobre el taupe de la marca |
-| 06 | La doctora | retrato en arco, formación y firma |
-| 07 | Reseñas | reseñas reales de Google |
-| 08–09 | Experiencia y reserva | el arco de la recepción se abre a la película y al terminar entra la tarjeta de reserva |
+| 01 | Atlas del rostro | el primer plano de la película convertido en ~14.000 puntos (WebGL) que se reúnen al cargar; una lupa sigue al cursor y deja ver la piel real; siete zonas: al pulsar una, la cámara se acerca, los puntos se agrandan como en un microscopio y la película de esa zona se abre en un círculo, con sus tratamientos al lado y «pregúntale a esta zona» |
+| 02 | La consulta | una pregunta en grande, respuestas rápidas que contesta la ficha al instante (y escriben la página) y texto libre al asistente; la ficha lateral (zonas, tratamientos, objetivos) acaba en la cita o en WhatsApp |
+| 03 | La clínica | la película entera en 10 capítulos navegables |
+| 04 | Quien traza el atlas | la doctora, con su formación como un currículum de lámina |
+| 05 | Índice | los 26 tratamientos en una tabla filtrable por área |
+| 06 | Voces | reseñas reales de Google en dos marquesinas que aceleran con el scroll |
+| 07 | Visita | dirección, horario, llamada y cómo llegar |
 
-`prefers-reduced-motion`: sin cargador ni pines; queda la composición estática.
-`?noloader` salta el cargador (útil para revisar).
+`prefers-reduced-motion`: sin introducción ni lupa errante; todo sigue funcionando.
 
 ## La asistente (ng-agent)
 
-Chat y llamada hablan con `https://ng-agent-eu.onrender.com` con el tenant `aruma-clinic`
-(`clinic.agent` en la ficha). «Reservar consulta», «Preguntar a Aruma» y «Reservar» de cada
-tratamiento abren el chat con la petición ya escrita.
+La consulta y la llamada hablan con `https://ng-agent-eu.onrender.com` con el tenant `aruma-clinic`
+(`clinic.agent` en la ficha). «Pregúntale a esta zona», «Preguntar a Aruma» del índice y «Reservar mi
+valoración» escriben en la consulta. Si la agenda no responde, la ficha sale por WhatsApp.
 
 Para que responda hace falta, en ng-agent:
 
@@ -58,7 +55,7 @@ Para que responda hace falta, en ng-agent:
 bash scripts/aruma-media.sh <carpeta>   # clinica-inicio.mp4 y las fotos de arumaclinic.com
 ```
 
-Corta la película en la portada por fotogramas, `cuidado-*.mp4`, `experiencia-*.mp4` y los
+Saca la película entera (`clinica-*.mp4`), un clip corto por zona del atlas (`zona-*.mp4`) y los
 fotogramas fijos; convierte fotos y logotipos a WebP. Solo material propio de la clínica (varias
 imágenes de su web antigua son de otras clínicas y no se usan).
 

@@ -25,11 +25,29 @@ export type Area = {
   treatments: string[];
 };
 
-export type HeroScene = { title: string; italic: string; lead: string; ctas?: boolean };
+/** Elipse sobre el primer plano del rostro, en px del fotograma de 1920×1080: [cx, cy, rx, ry]. */
+export type Ellipse = [number, number, number, number];
 
-/** Etiqueta sobre el rostro: punto en px del fotograma de 1920×1080. */
-export type Zone = { at: [number, number]; side: "l" | "r"; kicker: string; label: string; short?: string; mobile?: boolean };
+/** Una zona del atlas del rostro. */
+export type Zone = {
+  id: string;
+  n: string;
+  name: string;
+  italic: string;
+  /** Punto al que se acerca la cámara y donde va la cruz. */
+  at: [number, number];
+  /** Dónde se reconoce la zona al pasar el cursor; vacío = todo el rostro. */
+  shape: Ellipse[];
+  lead: string;
+  /** Lo que se ve en la lupa: clip de la película y su pie de figura. */
+  clip: string;
+  fig: string;
+  treatments: string[];
+};
 
-export type Review = { quote: string; name: string; role: string; photo: string };
+/** Respuesta rápida de la consulta: lo que contesta la clínica sin esperar al asistente. */
+export type Answer = { id: string; label: string; reply: string; zones: string[]; treatments: string[] };
 
-export type GalleryItem = { img: string; alt: string; caption: string; ar: number; h: number; y: number; g: number };
+export type Chapter = { at: number; label: string };
+
+export type Review = { quote: string; name: string };
