@@ -42,29 +42,29 @@ export const clinic = {
 
   /* =================== 01 · EL ATLAS DEL ROSTRO =================== */
   atlas: {
+    /** la película de entrada acaba exactamente en este fotograma, que se congela */
+    intro: "intro",
     still: "still-rostro",
-    /** fotograma del que se sacan los puntos (más pequeño: se lee una vez) */
-    sample: "still-rostro-960",
     frame: [1920, 1080] as [number, number],
     zones: [
       { id: "frente", n: "01", name: "Frente", italic: "y entrecejo", at: [1010, 175], shape: [[1010, 160, 300, 105]],
         lead: "Las líneas de expresión se suavizan relajando el músculo, sin perder la expresión. El objetivo es que luzcas descansada, no diferente.",
-        clip: "zona-consulta", fig: "Valoración del tercio superior", treatments: ["arrugas", "inductores-de-colageno"] },
+        clip: "foto-0578", fig: "Neuromoduladores en el entrecejo", treatments: ["arrugas", "inductores-de-colageno"] },
       { id: "mirada", n: "02", name: "Mirada", italic: "y patas de gallo", at: [880, 345], shape: [[880, 340, 190, 70], [1240, 330, 140, 60]],
         lead: "Arrugas perioculares muy finas que se tratan con toxina botulínica o con microinyecciones superficiales de ácido hialurónico.",
-        clip: "zona-limpieza", fig: "Limpieza y preparación de la piel", treatments: ["arrugas", "blanching"] },
+        clip: "zona-limpieza", fig: "Limpieza y preparación de la mirada", treatments: ["arrugas", "blanching"] },
       { id: "pomulos", n: "03", name: "Pómulos", italic: "y volumen", at: [790, 520], shape: [[790, 520, 150, 110]],
         lead: "Reponer el volumen que se pierde con los años devuelve un aspecto descansado. Antes de tratar, se estudia lo que hay bajo la piel.",
         clip: "zona-ecografia", fig: "Ecografía facial · bajo la piel", treatments: ["aumento-de-pomulos", "inductores-de-colageno", "armonizacion-facial"] },
       { id: "nariz", n: "04", name: "Nariz", italic: "sin cirugía", at: [1135, 500], shape: [[1135, 470, 75, 160]],
         lead: "Rectificar el caballete, elevar la punta o corregir asimetrías con ácido hialurónico, viendo el resultado en tiempo real.",
-        clip: "zona-consulta", fig: "El perfil, en consulta", treatments: ["rinomodelacion"] },
+        clip: "still-rostro", fig: "El perfil, en primer plano", treatments: ["rinomodelacion"] },
       { id: "labios", n: "05", name: "Labios", italic: "volumen justo", at: [1065, 745], shape: [[1065, 745, 165, 70]],
         lead: "La especialidad de la Dra. Marroquín: definir, dar volumen o simplemente hidratar, siempre en proporción con el resto del rostro.",
         clip: "zona-labios", fig: "Aumento de labios con ácido hialurónico", treatments: ["relleno-de-labios", "hidratacion-de-labios", "codigo-de-barras"] },
-      { id: "contorno", n: "06", name: "Contorno", italic: "mentón y mandíbula", at: [1000, 935], shape: [[1060, 940, 170, 80], [640, 820, 120, 140]],
+      { id: "contorno", n: "06", name: "Contorno", italic: "mentón y mandíbula", at: [700, 840], shape: [[1060, 940, 170, 80], [640, 820, 120, 140]],
         lead: "El perfil se construye entre mentón y mandíbula; a veces un pequeño cambio en uno equilibra todo el conjunto.",
-        clip: "zona-consulta", fig: "Lectura del perfil", treatments: ["aumento-de-menton", "marcacion-mandibular", "masculinizacion-facial", "bruxismo"] },
+        clip: "zona-consulta", fig: "Lectura del contorno en consulta", treatments: ["aumento-de-menton", "marcacion-mandibular", "masculinizacion-facial", "bruxismo"] },
       { id: "piel", n: "07", name: "La piel", italic: "entera", at: [1010, 560], shape: [],
         lead: "La base sobre la que todo lo demás se ve mejor: limpiar, hidratar, regenerar y dar luz, casi siempre sin tiempo de baja.",
         clip: "zona-hydrafacial", fig: "Hydrafacial · limpieza e hidratación", treatments: ["hydrafacial", "skinbooster", "polinucleotidos", "plasma-rico-en-plaqueta", "vitaminas-faciales", "dermapen", "peeling-quimico", "laser-fraccionado-no-ablativo", "luz-pulsada-intensa", "radiofrecuencia"] },

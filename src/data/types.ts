@@ -39,7 +39,7 @@ export type Zone = {
   /** Dónde se reconoce la zona al pasar el cursor; vacío = todo el rostro. */
   shape: Ellipse[];
   lead: string;
-  /** Lo que se ve en la lupa: clip de la película y su pie de figura. */
+  /** Plano de la zona a pantalla completa: `zona-*` es un clip de la película; lo demás, una imagen fija. */
   clip: string;
   fig: string;
   treatments: string[];

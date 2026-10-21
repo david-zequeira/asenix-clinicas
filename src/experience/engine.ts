@@ -44,6 +44,11 @@ export function startEngine(reduce: boolean): { lenis: Lenis | null; destroy: ()
     ScrollTrigger.refresh();
   }));
 
+  /* la barra cambia de tinta sobre las secciones oscuras (atlas, consulta, película) */
+  const nav = $("[data-nav]"), darks = $$("[data-dark]");
+  const navInk = () => { const under = darks.some((d) => { const r = d.getBoundingClientRect(); return r.top <= 40 && r.bottom > 40; }); nav.classList.toggle("on-dark", under); };
+  navInk(); on(window, "scroll", navInk, { passive: true }); on(window, "resize", navInk);
+
   /* la asistente se presenta un momento */
   const fab = $(".voz-fab");
   const hello = window.setTimeout(() => { fab.classList.add("hello"); window.setTimeout(() => fab.classList.remove("hello"), 3800); }, 5200);

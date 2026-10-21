@@ -13,7 +13,7 @@ src/
 ├── data/treatments.ts    áreas y tratamientos (generado del contenido de arumaclinic.com)
 ├── components/           marcado de cada sección (servidor): Chrome, Sections, Agent
 ├── experience/           lo que da vida a la página (cliente)
-│   ├── atlas.ts          el rostro en puntos (WebGL), la lupa, las zonas y el zoom con la película
+│   ├── atlas.ts          la entrada de cine, el rostro congelado con sus zonas y el corte a cada plano
 │   ├── consulta.ts       la asistente dentro de la página y la ficha que se rellena sola
 │   ├── engine.ts         Lenis + ScrollTrigger: titulares, película por capítulos, índice, voces
 │   ├── voz.ts            llamada web con Retell vía ng-agent
@@ -26,7 +26,7 @@ src/
 
 | | Sección | Qué pasa |
 |---|---|---|
-| 01 | Atlas del rostro | el primer plano de la película convertido en ~14.000 puntos (WebGL) que se reúnen al cargar; una lupa sigue al cursor y deja ver la piel real; siete zonas: al pulsar una, la cámara se acerca, los puntos se agrandan como en un microscopio y la película de esa zona se abre en un círculo, con sus tratamientos al lado y «pregúntale a esta zona» |
+| 01 | Atlas del rostro | entrada de cine: bandas de cinemascope, «Aruma Clinic presenta» y la película (recepción → bienvenida → el rostro); se congela en el primer plano, un barrido de luz descubre siete zonas sobre la piel real. Al pasar, la zona se ilumina y el resto se apaga; al pulsar, empujón de cámara con desenfoque y corte a su plano a pantalla completa (ecografía, labios, hydrafacial…), con el título del plano y sus tratamientos en un panel de cristal |
 | 02 | La consulta | una pregunta en grande, respuestas rápidas que contesta la ficha al instante (y escriben la página) y texto libre al asistente; la ficha lateral (zonas, tratamientos, objetivos) acaba en la cita o en WhatsApp |
 | 03 | La clínica | la película entera en 10 capítulos navegables |
 | 04 | Quien traza el atlas | la doctora, con su formación como un currículum de lámina |
@@ -34,7 +34,7 @@ src/
 | 06 | Voces | reseñas reales de Google en dos marquesinas que aceleran con el scroll |
 | 07 | Visita | dirección, horario, llamada y cómo llegar |
 
-`prefers-reduced-motion`: sin introducción ni lupa errante; todo sigue funcionando.
+`prefers-reduced-motion`: sin película de entrada; el rostro y sus zonas quedan quietos y todo sigue funcionando.
 
 ## La asistente (ng-agent)
 
@@ -55,7 +55,7 @@ Para que responda hace falta, en ng-agent:
 bash scripts/aruma-media.sh <carpeta>   # clinica-inicio.mp4 y las fotos de arumaclinic.com
 ```
 
-Saca la película entera (`clinica-*.mp4`), un clip corto por zona del atlas (`zona-*.mp4`) y los
+Saca la entrada del atlas (`intro-*.mp4`), la película entera (`clinica-*.mp4`), un clip por zona (`zona-*-1080|720.mp4`) y los
 fotogramas fijos; convierte fotos y logotipos a WebP. Solo material propio de la clínica (varias
 imágenes de su web antigua son de otras clínicas y no se usan).
 

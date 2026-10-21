@@ -11,46 +11,55 @@ const areaOf = (slug: string) => areas.find((a) => a.treatments.includes(slug)) 
 export function Atlas() {
   const a = clinic.atlas;
   return (
-    <section className="atlas" id="atlas" data-atlas aria-label="Atlas del rostro">
-      <div className="atlas-stage" data-atlas-stage data-cursor-off>
-        <img className="atlas-photo" src={img(a.still)} alt="Primer plano del rostro de una paciente de Aruma Clinic" data-atlas-photo fetchPriority="high" />
-        <canvas className="atlas-dots" data-atlas-dots aria-hidden="true" />
-        <div className="atlas-lens" data-atlas-lens aria-hidden="true"><i /><span className="mono" data-lens-label>Piel · 1:1</span></div>
-        <div className="atlas-marks" data-atlas-marks>
+    <section className="atlas dark" id="atlas" data-atlas data-dark aria-label="Atlas del rostro">
+      <div className="cine" data-cine>
+        {/* el fotograma y la película de entrada comparten encuadre: 1920×1080 movidos por el motor */}
+        <div className="frame" data-frame>
+          <img className="still" src={img(a.still)} alt="Primer plano del rostro de una paciente de Aruma Clinic" data-still fetchPriority="high" />
+          <video className="intro-v" muted playsInline preload="auto" data-hd={img(`${a.intro}-1080`, "mp4")} data-sd={img(`${a.intro}-720`, "mp4")} data-intro-video aria-hidden="true" />
+        </div>
+        <div className="spot" data-spot aria-hidden="true" />
+        <div className="marks" data-marks>
           {a.zones.filter((z) => z.shape.length).map((z) => (
-            <button type="button" className="mk-z" key={z.id} data-zone-open={z.id} data-at={z.at.join(",")} aria-label={`${z.name} ${z.italic}`}>
-              <i /><b>{z.n}</b><span>{z.name}</span>
+            <button type="button" className="zm" key={z.id} data-zone-open={z.id} data-at={z.at.join(",")} aria-label={`Zona ${z.n}: ${z.name} ${z.italic}`}>
+              <i className="ring" /><i className="ln" /><span className="lb"><small>{z.n}</small>{z.name}</span>
             </button>
           ))}
         </div>
-        <div className="loupe" data-loupe aria-hidden="true">
-          <div className="ring" data-loupe-ring />
-          <div className="lv" data-loupe-lv><video muted loop playsInline preload="none" data-loupe-video /></div>
-          <div className="fig mono" data-loupe-fig />
+        <div className="zmedia" data-zmedia aria-hidden="true">
+          <video muted loop playsInline preload="none" data-zvideo />
+          <img alt="" data-zimg />
         </div>
+        <div className="grade" aria-hidden="true" />
+        <i className="scan" data-scan aria-hidden="true" />
+        <div className="bars" aria-hidden="true"><i data-bar-t /><i data-bar-b /></div>
+        <div className="flash" data-flash aria-hidden="true" />
       </div>
+
+      <div className="cards" aria-hidden="true">
+        <p className="mono" data-card="0">Aruma Clinic presenta</p>
+        <p className="serif" data-card="1">Ciencia <em>&amp; serenidad</em></p>
+      </div>
+      <button type="button" className="skip mono" data-skip>Saltar intro</button>
 
       <div className="atlas-copy" data-atlas-copy>
-        <div className="mono" data-intro-in>Aruma Clinic · Madrid · fig. 01</div>
-        <h1 className="h-xl" data-intro-title><span className="line-m"><span>Atlas</span></span><span className="line-m"><span><em>del rostro</em></span></span></h1>
-        <p className="lead" data-intro-in>Cada rostro es un mapa propio. Explora la piel bajo la ciencia y elige una zona.</p>
-        <ol className="zlist" data-zlist>
-          {a.zones.map((z) => (
-            <li key={z.id} data-intro-in>
-              <button type="button" data-zone-open={z.id} data-zone-hover={z.id}>
-                <small>{z.n}</small><span>{z.name}</span><em>{z.treatments.length} trat.</em>
-              </button>
-            </li>
-          ))}
-        </ol>
+        <div className="mono" data-in>fig. 01 — Madrid · medicina estética avanzada</div>
+        <h1 className="h-xl" data-atlas-title><span className="line-m"><span>Atlas</span></span><span className="line-m"><span><em>del rostro</em></span></span></h1>
+        <p className="lead" data-in>Cada rostro es un mapa propio. Elige una zona y te enseñamos cómo la tratamos.</p>
       </div>
-      <div className="atlas-hint mono" data-intro-in>Ciencia &amp; Serenidad — {Object.keys(treatments).length} tratamientos</div>
-      <div className="atlas-foot">
-        <div className="mono count" data-intro-in>Cartografía · <b data-dot-count>00000</b> puntos · 07 zonas</div>
-        <a className="mono scroll" href="#consulta" data-intro-in><i />La consulta</a>
-      </div>
+      <nav className="zindex" data-zindex aria-label="Zonas del rostro">
+        {a.zones.map((z) => (
+          <button type="button" key={z.id} data-zone-open={z.id} data-zone-hover={z.id} data-in>
+            <small>{z.n}</small><span>{z.name}</span>
+          </button>
+        ))}
+      </nav>
 
-      <aside className="zpanel" data-zpanel aria-live="polite" data-lenis-prevent>
+      <div className="zcap" data-zcap aria-live="polite">
+        <div className="mono" data-zc-fig />
+        <h2 className="h-l" data-zc-title />
+      </div>
+      <aside className="zpanel" data-zpanel data-lenis-prevent>
         <div className="zp-top">
           <div className="mono" data-zp-n>Zona 01 / 07</div>
           <div className="nav-z">
@@ -60,7 +69,6 @@ export function Atlas() {
           </div>
         </div>
         <div className="zp-body" data-zp-body>
-          <h2 className="h-m" data-zp-title />
           <p className="lead" data-zp-lead />
           <div className="zp-tr" data-zp-tr />
         </div>
@@ -83,7 +91,7 @@ export function Atlas() {
 export function Consulta() {
   const c = clinic.consulta;
   return (
-    <section className="sec consulta" id="consulta" data-consulta>
+    <section className="sec consulta dark" id="consulta" data-consulta data-dark>
       <div className="sec-head"><span className="mono">02 — La consulta</span><span className="mono">Te atiende la asistente de Aruma · 24 h</span></div>
       <div className="cs-grid">
         <div className="cs-main">
@@ -120,7 +128,7 @@ export function Consulta() {
 /* =================== 03 · LA CLÍNICA, EN 26 SEGUNDOS =================== */
 export function Film() {
   return (
-    <section className="sec film" id="clinica" data-film>
+    <section className="sec film dark" id="clinica" data-film data-dark>
       <div className="sec-head"><span className="mono">03 — La clínica</span><span className="mono">Don Ramón de la Cruz 36 · Madrid</span></div>
       <div className="film-cap">
         <h2 className="h-l" data-film-title><span className="line-m"><span>Veintiséis segundos</span></span><span className="line-m"><span><em>de serenidad</em></span></span></h2>
@@ -188,7 +196,7 @@ export function Indice() {
                 <span className="m">{areaOf(s).name}</span>
                 <span className="m hide-m">{fact(s, "Sesión") ?? "—"}</span>
                 <span className="m hide-m">{fact(s, "Efecto") ?? "—"}</span>
-                <span className="m hide-m">{fact(s, "Precio")?.replace("Desde ", "") ?? "Valoración"}</span>
+                <span className="m hide-m">{fact(s, "Precio")?.replace("Desde ", "").replace(" · por ", " / ").replace(" · primera sesión", " · 1.ª") ?? "Valoración"}</span>
               </summary>
               <div className="body">
                 <p>{t.description}</p>

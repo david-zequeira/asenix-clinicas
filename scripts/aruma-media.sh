@@ -10,7 +10,8 @@
 #   LED · ecografía · labios · sala de espera
 #
 #   clinica-1080|720.mp4           la película entera, sin audio (sección «La clínica»)
-#   zona-*.mp4                     clips cortos de 960 px para la lupa del atlas
+#   intro-1080|720.mp4             la entrada del atlas (0–4,6 s)
+#   zona-*-1080|720.mp4            un clip por zona del atlas, ralentizado
 #   still-*.webp                   fotogramas fijos para secciones y tarjetas
 #   foto-*.webp                    fotografías de la clínica
 set -euo pipefail
@@ -30,11 +31,16 @@ ffmpeg -v error -y -i "$FILM" -vf "scale=1280:-2" $H264 -crf 25 "$OUT/clinica-72
 ffmpeg -v error -y -ss 0.6 -i "$FILM" -frames:v 1 -q:v 2 "$TMP/clinica-poster.jpg"
 webp "$TMP/clinica-poster.jpg" 1600 78 "$OUT/clinica-poster.webp"
 
-echo "== clips del atlas (uno por zona, en bucle dentro de la lupa)"
+echo "== intro del atlas: recepción → bienvenida → el rostro (acaba en el fotograma de still-rostro)"
+ffmpeg -v error -y -t 4.6 -i "$FILM" -vf "scale=1920:-2" $H264 -crf 21 "$OUT/intro-1080.mp4"
+ffmpeg -v error -y -t 4.6 -i "$FILM" -vf "scale=1280:-2" $H264 -crf 24 "$OUT/intro-720.mp4"
+
+echo "== clips del atlas: uno por zona, a pantalla completa (1080) y para el móvil (720)"
 # nombre|inicio|duración|ralentí
-for entry in "limpieza|7.4|3.2|1" "ecografia|18.7|2.8|1" "labios|22.0|2.5|1" "consulta|5.45|1.25|1.6" "hydrafacial|10.9|3.3|1" "led|14.5|3.4|1"; do
+for entry in "limpieza|7.4|3.2|1.25" "ecografia|18.7|2.8|1.25" "labios|22.0|2.5|1.3" "consulta|5.45|1.25|2" "hydrafacial|10.9|3.3|1.2" "led|14.5|3.4|1.2"; do
   IFS='|' read -r name ss t slow <<<"$entry"
-  ffmpeg -v error -y -ss "$ss" -t "$t" -i "$FILM" -vf "setpts=$slow*PTS,scale=960:-2" $H264 -crf 23 "$OUT/zona-$name.mp4"
+  ffmpeg -v error -y -ss "$ss" -t "$t" -i "$FILM" -vf "setpts=$slow*PTS,scale=1920:-2" $H264 -crf 21 "$OUT/zona-$name-1080.mp4"
+  ffmpeg -v error -y -ss "$ss" -t "$t" -i "$FILM" -vf "setpts=$slow*PTS,scale=1280:-2" $H264 -crf 24 "$OUT/zona-$name-720.mp4"
 done
 
 echo "== fotogramas fijos"
