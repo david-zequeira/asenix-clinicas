@@ -6,6 +6,12 @@
    Retell. El navegador nunca ve la API key de Retell. Si el agente pide el
    correo en pantalla (pedir_contacto_en_pantalla) se envía a
    POST /api/voice/web-call/:callId/contact.
+
+   Retell v3 (18/10/2026): el backend crea la llamada con /v3/create-web-call
+   y el navegador entra con el SDK 3.x pasando callId, transport e iceServers
+   a startCall(). Por el transporte nuevo el SDK ya no reenvía `metadata` ni
+   `update`: estado de herramienta, correo recibido y subtítulo llegan por el
+   canal de interfaz del backend (GET /api/voice/web-call/:callId/events, SSE).
    ===================================================================== */
 import { $, sessionId } from "./session";
 
@@ -14,7 +20,13 @@ type Listener = (...a: never[]) => void;
 type RetellClient = {
   on: (ev: string, fn: Listener) => void;
   removeAllListeners: () => void;
-  startCall: (o: { accessToken: string; emitRawAudioSamples?: boolean }) => Promise<void>;
+  startCall: (o: {
+    accessToken: string;
+    callId?: string;
+    transport?: "gateway" | "livekit";
+    iceServers?: RTCIceServer[];
+    emitRawAudioSamples?: boolean;
+  }) => Promise<void>;
   startAudioPlayback: () => Promise<void>;
   stopCall: () => void;
   mute: () => void;
@@ -23,7 +35,29 @@ type RetellClient = {
 type Sdk = { RetellWebClient: new () => RetellClient };
 
 const TOKEN_TIMEOUT_MS = 60_000; // arranque en frío de Render
-const SDK_URLS = ["https://cdn.jsdelivr.net/npm/retell-client-js-sdk@2/+esm", "https://esm.sh/retell-client-js-sdk@2"];
+// versión exacta: una publicación nueva del SDK no cambia la llamada sin probarla antes
+const SDK_URLS = ["https://cdn.jsdelivr.net/npm/retell-client-js-sdk@3.0.4/+esm", "https://esm.sh/retell-client-js-sdk@3.0.4"];
+// "hablando" → "te escucho" se infiere del nivel de audio del agente (el SDK ya no
+// emite agent_stop_talking): este silencio seguido, tras el margen que se concede
+// a cada frase para que el TTS empiece a sonar.
+const AGENT_SILENCE_MS = 600;
+const AGENT_TEXT_GRACE_MS = 1500;
+const AGENT_LOUD_LEVEL = 0.06;
+/** Respuesta de POST /api/voice/web-call (contrato del backend, Retell v3). */
+type WebCallResponse = {
+  accessToken?: string;
+  callId?: string;
+  transport?: string;
+  iceServers?: RTCIceServer[];
+  reply?: string;
+  error?: string;
+};
+/** Eventos del canal de interfaz del backend. */
+type UiEvent =
+  | { type: "state"; state: string; tool?: string }
+  | { type: "agent_text"; turn: string; text: string; done: boolean }
+  | { type: "user_text"; text: string; final: boolean }
+  | { type: "end" };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const TOOL_LABELS: Record<string, "agenda" | "reserva" | "contacto"> = {
   consultar_disponibilidad: "agenda",
@@ -63,6 +97,9 @@ export function initVoz(cfg: Cfg): () => void {
   let state = "idle";
   let client: RetellClient | null = null;
   let callId: string | null = null;
+  let events: EventSource | null = null; // canal de interfaz (SSE)
+  let agentTurn: { turn: string; text: string } | null = null; // respuesta en curso (subtítulo)
+  let loudUntil = 0; // último instante en que el agente sonó (o margen concedido)
   let gen = 0;
   let muted = false;
   let abort: AbortController | null = null;
@@ -97,7 +134,14 @@ export function initVoz(cfg: Cfg): () => void {
     const rms = Math.sqrt(sum / (samples.length / 4));
     level = Math.max(level * 0.82, Math.min(1, rms * 4));
   };
-  const loop = () => { level *= 0.94; orb.style.setProperty("--lv", level.toFixed(3)); raf = requestAnimationFrame(loop); };
+  const loop = () => {
+    level *= 0.94;
+    orb.style.setProperty("--lv", level.toFixed(3));
+    const now = Date.now();
+    if (level > AGENT_LOUD_LEVEL) loudUntil = Math.max(loudUntil, now);
+    if (state === "speaking" && now - loudUntil > AGENT_SILENCE_MS) setState("listening");
+    raf = requestAnimationFrame(loop);
+  };
   const startOrb = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); };
   const stopOrb = () => { cancelAnimationFrame(raf); level = 0; orb.style.setProperty("--lv", "0"); };
 
@@ -109,15 +153,44 @@ export function initVoz(cfg: Cfg): () => void {
     })();
     return sdk;
   };
-  type Payload = { metadata?: Record<string, string>; transcript?: { role: string; content: string }[] } & Record<string, unknown>;
-  const readMeta = (p: Payload | null) => (p && typeof p === "object" ? ((p.metadata && typeof p.metadata === "object" ? p.metadata : p) as Record<string, string>) : null);
-  const lastAgentLine = (p: Payload | null) => {
-    const turns = p && Array.isArray(p.transcript) ? p.transcript : [];
-    for (let i = turns.length - 1; i >= 0; i--) {
-      const t = turns[i];
-      if (t && (t.role === "agent" || t.role === "assistant") && typeof t.content === "string" && t.content.trim()) return t.content.trim();
-    }
-    return null;
+  const closeEvents = () => { if (events) { events.close(); events = null; } };
+
+  /* Canal de interfaz del backend (SSE). Best-effort: si falla, la llamada sigue
+     y solo se pierden subtítulo, etiqueta de herramienta y apertura del correo. */
+  const openEvents = (id: string, cancelled: () => boolean) => {
+    if (typeof EventSource === "undefined") return;
+    closeEvents();
+    agentTurn = null; loudUntil = 0;
+    const es = new EventSource(`${AGENT_URL}/api/voice/web-call/${encodeURIComponent(id)}/events?sessionId=${encodeURIComponent(sid)}&tenant=${encodeURIComponent(cfg.tenant)}`);
+    events = es;
+    const onUi = (raw: MessageEvent) => {
+      if (cancelled()) return;
+      let ev: UiEvent;
+      try { ev = JSON.parse(String(raw.data)) as UiEvent; } catch { return; }
+      if (!ev || typeof ev !== "object") return;
+      if (ev.type === "state") {
+        if (ev.state === "contact_received") { formNote.textContent = "Recibido ✓"; setTimeout(() => showForm(false), 1200); return; }
+        if (ev.state === "tool") {
+          const label = TOOL_LABELS[ev.tool ?? ""];
+          setState("tool", label ? MSG[label] : MSG.thinking);
+          if (label === "contacto") showForm(true);
+        } else if (ev.state === "answering" && state === "tool") setState("thinking");
+      } else if (ev.type === "agent_text") {
+        if (typeof ev.text !== "string" || !ev.text.trim()) return;
+        const text = agentTurn && agentTurn.turn === ev.turn ? `${agentTurn.text} ${ev.text.trim()}` : ev.text.trim();
+        agentTurn = { turn: ev.turn, text };
+        lineEl.textContent = text;
+        loudUntil = Math.max(loudUntil, Date.now() + AGENT_TEXT_GRACE_MS);
+        setState("speaking");
+      } else if (ev.type === "user_text") {
+        // Retell ya pidió respuesta: el cliente ha terminado de hablar.
+        if (ev.final && state === "listening") setState("thinking");
+      } else if (ev.type === "end") {
+        es.close(); if (events === es) events = null;
+      }
+    };
+    for (const t of ["state", "agent_text", "user_text", "end"]) es.addEventListener(t, onUi);
+    es.onerror = () => {}; // EventSource reintenta solo
   };
 
   async function start() {
@@ -155,7 +228,7 @@ export function initVoz(cfg: Cfg): () => void {
         body: JSON.stringify({ sessionId: sid, tenant: cfg.tenant }),
         signal: abort.signal,
       });
-      const data = await res.json().catch(() => ({}));
+      const data: WebCallResponse = await res.json().catch(() => ({}));
       if (cancelled()) return;
       callId = data.callId || null;
       if (!res.ok || !data.accessToken) {
@@ -165,40 +238,42 @@ export function initVoz(cfg: Cfg): () => void {
         return fail(ERR.unavailable);
       }
 
+      // Canal de interfaz ANTES de entrar: el saludo sale nada más conectar.
+      if (callId) openEvents(callId, cancelled);
+
       const { RetellWebClient } = await sdkP;
       if (cancelled()) return;
       const c = new RetellWebClient();
       client = c;
-      c.on("call_ready", () => { if (!cancelled()) { startOrb(); setState("listening"); } });
+      // Solo desde "conectando": el saludo puede haber llegado ya por el canal.
+      c.on("call_ready", () => { if (!cancelled()) { startOrb(); if (state === "connecting") setState("listening"); } });
       c.on("agent_start_talking", () => { if (!cancelled()) setState("speaking"); });
       c.on("agent_stop_talking", () => { if (!cancelled() && state === "speaking") setState("listening"); });
       c.on("audio", ((samples: Float32Array) => { if (!cancelled()) pushSamples(samples); }) as Listener);
-      c.on("update", ((payload: Payload) => { if (cancelled()) return; const line = lastAgentLine(payload); if (line) lineEl.textContent = line; }) as Listener);
-      c.on("metadata", ((payload: Payload) => {
-        if (cancelled()) return;
-        const m = readMeta(payload);
-        if (!m) return;
-        if (m.state === "contact_received") { formNote.textContent = "Recibido ✓"; setTimeout(() => showForm(false), 1200); return; }
-        if (m.state === "tool") {
-          const label = TOOL_LABELS[m.tool];
-          setState("tool", label ? MSG[label] : MSG.thinking);
-          if (label === "contacto") showForm(true);
-        } else if (m.state === "answering" && state === "tool") setState("thinking");
-      }) as Listener);
-      c.on("call_ended", () => { stopOrb(); if (cancelled()) return; client = null; setState("ended"); });
+      // `update` y `metadata` ya no llegan por el SDK (transporte v3): ver openEvents.
+      c.on("call_ended", () => { stopOrb(); closeEvents(); if (cancelled()) return; client = null; setState("ended"); });
       c.on("error", () => {
         c.removeAllListeners();
         try { c.stopCall(); } catch {}
+        stopOrb(); closeEvents();
         if (cancelled()) return;
         client = null;
         fail(ERR.generic);
       });
-      await c.startCall({ accessToken: data.accessToken, emitRawAudioSamples: true });
+      // callId, transport e iceServers: la respuesta v3 que startCall() necesita
+      // para conectar por el gateway (sin ellos intentaría el transporte antiguo).
+      await c.startCall({
+        accessToken: data.accessToken,
+        callId: data.callId,
+        transport: data.transport === "gateway" || data.transport === "livekit" ? data.transport : undefined,
+        iceServers: data.iceServers,
+        emitRawAudioSamples: true,
+      });
       if (cancelled()) { try { c.stopCall(); } catch {} return; }
       try { await c.startAudioPlayback(); } catch {}
     } catch {
       if (cancelled()) return;
-      client = null;
+      client = null; closeEvents();
       fail(ERR.unavailable);
     } finally {
       clearTimeout(timer);
@@ -211,6 +286,7 @@ export function initVoz(cfg: Cfg): () => void {
     if (abort) { abort.abort(); abort = null; }
     const c = client; client = null;
     if (c) { c.removeAllListeners(); try { c.stopCall(); } catch {} }
+    closeEvents();
     stopOrb();
     showForm(false);
     if (state !== "idle" && state !== "error") setState("ended");
