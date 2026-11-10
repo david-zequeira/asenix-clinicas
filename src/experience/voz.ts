@@ -56,6 +56,7 @@ type WebCallResponse = {
 type UiEvent =
   | { type: "state"; state: string; tool?: string }
   | { type: "agent_text"; turn: string; text: string; done: boolean }
+  | { type: "agent_spoken"; text: string }
   | { type: "user_text"; text: string; final: boolean }
   | { type: "end" };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -164,6 +165,11 @@ export function initVoz(cfg: Cfg): () => void {
     if (typeof EventSource === "undefined") return;
     closeEvents();
     agentTurn = null; loudUntil = 0; setYou("");
+    // El subtítulo de verdad es agent_spoken (palabra a palabra, al ritmo de
+    // la voz). agent_text llega con la frase entera antes de sonar: solo se
+    // pinta, con 1,5 s de espera, si el backend no manda el otro.
+    let spokenSeen = false;
+    let textTimer: ReturnType<typeof setTimeout> | undefined;
     const es = new EventSource(`${AGENT_URL}/api/voice/web-call/${encodeURIComponent(id)}/events?sessionId=${encodeURIComponent(sid)}&tenant=${encodeURIComponent(cfg.tenant)}`);
     events = es;
     const onUi = (raw: MessageEvent) => {
@@ -182,9 +188,16 @@ export function initVoz(cfg: Cfg): () => void {
         if (typeof ev.text !== "string" || !ev.text.trim()) return;
         const text = agentTurn && agentTurn.turn === ev.turn ? `${agentTurn.text} ${ev.text.trim()}` : ev.text.trim();
         agentTurn = { turn: ev.turn, text };
-        lineEl.textContent = text;
+        if (!spokenSeen) {
+          clearTimeout(textTimer);
+          textTimer = setTimeout(() => { if (!spokenSeen && !cancelled() && events === es && agentTurn) lineEl.textContent = agentTurn.text; }, 1500);
+        }
         loudUntil = Math.max(loudUntil, Date.now() + AGENT_TEXT_GRACE_MS);
         setState("speaking");
+      } else if (ev.type === "agent_spoken") {
+        if (typeof ev.text !== "string" || !ev.text.trim()) return;
+        spokenSeen = true; clearTimeout(textTimer);
+        lineEl.textContent = ev.text.trim();
       } else if (ev.type === "user_text") {
         // Lo que el visitante va diciendo, según lo transcribe Retell (parciales y final).
         if (typeof ev.text === "string" && ev.text.trim()) setYou(ev.text.trim());
@@ -194,7 +207,7 @@ export function initVoz(cfg: Cfg): () => void {
         es.close(); if (events === es) events = null;
       }
     };
-    for (const t of ["state", "agent_text", "user_text", "end"]) es.addEventListener(t, onUi);
+    for (const t of ["state", "agent_text", "agent_spoken", "user_text", "end"]) es.addEventListener(t, onUi);
     es.onerror = () => {}; // EventSource reintenta solo
   };
 
