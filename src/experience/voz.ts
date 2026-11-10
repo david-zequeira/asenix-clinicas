@@ -91,6 +91,9 @@ export function initVoz(cfg: Cfg): () => void {
 
   const sid = sessionId();
   const overlay = $("[data-voz]"), orb = $("[data-voz-orb]"), statusEl = $("[data-voz-status]"), lineEl = $("[data-voz-line]");
+  // Opcional: lo que dice el visitante, en vivo.
+  const youEl = document.querySelector<HTMLElement>("[data-voz-you]");
+  const setYou = (t: string) => { if (youEl) youEl.textContent = t; };
   const form = $<HTMLFormElement>("[data-voz-form]"), emailIn = $<HTMLInputElement>("[data-voz-email]"), formNote = $("[data-voz-form-note]");
   const muteBtn = $("[data-voz-mute]"), hangBtn = $("[data-voz-hang]"), closeBtn = $("[data-voz-close]"), retryBtn = $("[data-voz-retry]");
 
@@ -160,7 +163,7 @@ export function initVoz(cfg: Cfg): () => void {
   const openEvents = (id: string, cancelled: () => boolean) => {
     if (typeof EventSource === "undefined") return;
     closeEvents();
-    agentTurn = null; loudUntil = 0;
+    agentTurn = null; loudUntil = 0; setYou("");
     const es = new EventSource(`${AGENT_URL}/api/voice/web-call/${encodeURIComponent(id)}/events?sessionId=${encodeURIComponent(sid)}&tenant=${encodeURIComponent(cfg.tenant)}`);
     events = es;
     const onUi = (raw: MessageEvent) => {
@@ -183,6 +186,8 @@ export function initVoz(cfg: Cfg): () => void {
         loudUntil = Math.max(loudUntil, Date.now() + AGENT_TEXT_GRACE_MS);
         setState("speaking");
       } else if (ev.type === "user_text") {
+        // Lo que el visitante va diciendo, según lo transcribe Retell (parciales y final).
+        if (typeof ev.text === "string" && ev.text.trim()) setYou(ev.text.trim());
         // Retell ya pidió respuesta: el cliente ha terminado de hablar.
         if (ev.final && state === "listening") setState("thinking");
       } else if (ev.type === "end") {
@@ -196,7 +201,7 @@ export function initVoz(cfg: Cfg): () => void {
   async function start() {
     if (state !== "idle" && state !== "ended" && state !== "error") return;
     open();
-    lineEl.textContent = "";
+    lineEl.textContent = ""; setYou("");
     showForm(false);
     muted = false; muteBtn.setAttribute("aria-pressed", "false");
     callId = null;
