@@ -165,11 +165,8 @@ export function initVoz(cfg: Cfg): () => void {
     if (typeof EventSource === "undefined") return;
     closeEvents();
     agentTurn = null; loudUntil = 0; setYou("");
-    // El subtítulo de verdad es agent_spoken (palabra a palabra, al ritmo de
-    // la voz). agent_text llega con la frase entera antes de sonar: solo se
-    // pinta, con 1,5 s de espera, si el backend no manda el otro.
-    let spokenSeen = false;
-    let textTimer: ReturnType<typeof setTimeout> | undefined;
+    // El subtítulo es agent_spoken (palabra a palabra, al ritmo de la voz).
+    // agent_text llega con la frase entera antes de sonar: no se pinta.
     const es = new EventSource(`${AGENT_URL}/api/voice/web-call/${encodeURIComponent(id)}/events?sessionId=${encodeURIComponent(sid)}&tenant=${encodeURIComponent(cfg.tenant)}`);
     events = es;
     const onUi = (raw: MessageEvent) => {
@@ -188,19 +185,16 @@ export function initVoz(cfg: Cfg): () => void {
         if (typeof ev.text !== "string" || !ev.text.trim()) return;
         const text = agentTurn && agentTurn.turn === ev.turn ? `${agentTurn.text} ${ev.text.trim()}` : ev.text.trim();
         agentTurn = { turn: ev.turn, text };
-        if (!spokenSeen) {
-          clearTimeout(textTimer);
-          textTimer = setTimeout(() => { if (!spokenSeen && !cancelled() && events === es && agentTurn) lineEl.textContent = agentTurn.text; }, 1500);
-        }
         loudUntil = Math.max(loudUntil, Date.now() + AGENT_TEXT_GRACE_MS);
         setState("speaking");
       } else if (ev.type === "agent_spoken") {
         if (typeof ev.text !== "string" || !ev.text.trim()) return;
-        spokenSeen = true; clearTimeout(textTimer);
         lineEl.textContent = ev.text.trim();
       } else if (ev.type === "user_text") {
         // Lo que el visitante va diciendo, según lo transcribe Retell (parciales y final).
         if (typeof ev.text === "string" && ev.text.trim()) setYou(ev.text.trim());
+        // Habla el visitante: la frase anterior del agente ya no pinta nada.
+        if (!ev.final && state === "listening") lineEl.textContent = "";
         // Retell ya pidió respuesta: el cliente ha terminado de hablar.
         if (ev.final && state === "listening") setState("thinking");
       } else if (ev.type === "end") {

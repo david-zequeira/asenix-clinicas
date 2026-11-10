@@ -416,6 +416,8 @@ html.voz-open .voz-fab, html.zone-open .voz-fab, html.intro .voz-fab { opacity: 
 .voz-you:not(:empty)::before { content: "Tú: "; opacity: .8; }
 .voz[data-state="error"] .voz-you { display: none; }
 .voz-line { font-family: var(--serif); font-weight: 400; font-size: clamp(24px, 4.4vw, 32px); line-height: 1.25; min-height: 2.4em; max-width: 26ch; }
+/* Como mucho tres líneas, las ÚLTIMAS: una respuesta larga empujaba los botones fuera de la pantalla. */
+.voz:not([data-state="error"]) .voz-line { display: flex; flex-direction: column; justify-content: flex-end; max-height: 3.75em; overflow: hidden; }
 .voz-form { width: 100%; display: flex; flex-direction: column; gap: 10px; }
 .voz-form .row { display: flex; gap: 8px; width: 100%; }
 .voz-form input { flex: 1; min-width: 0; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(244, 239, 232, 0.22); border-radius: 14px; padding: 15px 16px; color: var(--paper); font-size: 16px; }
