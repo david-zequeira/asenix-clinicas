@@ -411,6 +411,10 @@ html.voz-open .voz-fab, html.zone-open .voz-fab, html.intro .voz-fab { opacity: 
 @keyframes vozBreath { 50% { transform: scale(0.94); } }
 .voz-status { font-family: var(--mono); font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); min-height: 16px; }
 .voz[data-state="error"] .voz-status { color: #e7a38f; letter-spacing: 0.02em; text-transform: none; font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+/* lo que va diciendo el visitante, según lo transcribe el servidor: pequeño y apagado, sobre la frase del agente */
+.voz-you { font-size: 15px; line-height: 1.4; min-height: 1.4em; max-width: 34ch; margin: 0; opacity: .62; }
+.voz-you:not(:empty)::before { content: "Tú: "; opacity: .8; }
+.voz[data-state="error"] .voz-you { display: none; }
 .voz-line { font-family: var(--serif); font-weight: 400; font-size: clamp(24px, 4.4vw, 32px); line-height: 1.25; min-height: 2.4em; max-width: 26ch; }
 .voz-form { width: 100%; display: flex; flex-direction: column; gap: 10px; }
 .voz-form .row { display: flex; gap: 8px; width: 100%; }

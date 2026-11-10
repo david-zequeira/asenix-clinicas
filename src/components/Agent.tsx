@@ -15,6 +15,7 @@ export default function Agent() {
           <div className="voz-brand">Citas y tratamientos<img src={img("logo-aruma-texto")} alt={clinic.name} /></div>
           <div className="voz-orb" data-voz-orb><i>{mark}</i></div>
           <div className="voz-status" data-voz-status aria-live="polite" />
+          <p className="voz-you" data-voz-you aria-live="off" />
           <p className="voz-line" data-voz-line aria-live="polite" />
           <form className="voz-form" data-voz-form hidden>
             <div className="row">
